@@ -1,0 +1,142 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: fcs-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: fcs
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - fcs-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: fcs-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks:
+      - fcs-network
+
+  mock-agri-stack:
+    build:
+      context: ./services/mock-agri-stack
+      dockerfile: Dockerfile
+    container_name: fcs-mock-agri-stack
+    environment:
+      - PORT=5001
+    volumes:
+      - ./sample_data:/app/data:ro
+    ports:
+      - "5001:5001"
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:5001/healthz" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - fcs-network
+
+  api:
+    build:
+      context: ./services/api
+      dockerfile: Dockerfile
+    container_name: fcs-api
+    env_file:
+      - .env
+    environment:
+      - DB_HOST=postgres
+      - REDIS_URL=redis://redis:6379/0
+      - MOCK_AGRI_URL=http://mock-agri-stack:5001
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      mock-agri-stack:
+        condition: service_healthy
+    volumes:
+      - ./services/ml:/app/ml:ro
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8000/healthz" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - fcs-network
+
+  worker:
+    build:
+      context: ./services/worker
+      dockerfile: Dockerfile
+    container_name: fcs-worker
+    env_file:
+      - .env
+    environment:
+      - DB_HOST=postgres
+      - REDIS_URL=redis://redis:6379/0
+      - MOCK_AGRI_URL=http://mock-agri-stack:5001
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      api:
+        condition: service_healthy
+    volumes:
+      - ./services/ml:/app/ml:ro
+    networks:
+      - fcs-network
+  # frontend:
+  #   build:
+  #     context: ./services/frontend
+  #     dockerfile: Dockerfile
+  #     args:
+  #       - VITE_API_URL=http://localhost:8000
+  #   container_name: fcs-frontend
+  #   ports:
+  #     - "3000:80"
+  #   depends_on:
+  #     - api
+  #   networks:
+  #     - fcs-network
+
+  # dashboard:
+  #   build:
+  #     context: ./services/dashboard
+  #     dockerfile: Dockerfile
+  #     args:
+  #       - VITE_API_URL=http://localhost:8000
+  #   container_name: fcs-dashboard
+  #   ports:
+  #     - "3001:80"
+  #   depends_on:
+  #     - api
+  #   networks:
+  #     - fcs-network
+
+volumes:
+  postgres_data:
+
+
+networks:
+  fcs-network:
+    driver: bridge

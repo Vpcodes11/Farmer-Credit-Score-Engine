@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fcs-config
+  namespace: fcs-engine
+data:
+  API_HOST: "0.0.0.0"
+  API_PORT: "8000"
+  DB_HOST: "postgres"
+  DB_PORT: "5432"
+  DB_NAME: "fcs"
+  REDIS_URL: "redis://redis:6379/0"
+  MOCK_AGRI_URL: "http://mock-agri-stack:5001"
+  ENVIRONMENT: "production"
+  USE_ML_MODEL: "true"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: fcs-secrets
+  namespace: fcs-engine
+type: Opaque
+stringData:
+  JWT_SECRET: "change-this-in-production"
+  DB_USER: "postgres"
+  DB_PASS: "postgres"
+  # Add your secrets here
