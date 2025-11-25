@@ -1,318 +1,199 @@
 # Farmer Credit Score Engine
 
-**Transparent credit scoring for farmers using Agri Stack data + satellite/weather/alternative data**
+**Transparent, Data-Driven Credit Scoring for the Unbanked**
 
 [![CI](https://github.com/youruser/farmer-credit-score-engine/workflows/CI/badge.svg)](https://github.com/youruser/farmer-credit-score-engine/actions)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-
-## 🎯 Overview
-
-The Farmer Credit Score Engine is a production-ready microservices platform that computes transparent credit scores (0-100) for farmers. It combines:
-
-- **Agri Stack data**: Land records, crop registry, farmer profiles
-- **Satellite imagery**: NDVI vegetation indices for crop health
-- **Weather data**: Rainfall patterns and anomalies
-- **Alternative data**: UPI transactions, FPO membership, market access
-
-**Key Features:**
-- ✅ Transparent scoring with SHAP explainability (top 3 drivers)
-- ✅ REST APIs for banks and field agents
-- ✅ Offline-first PWA for rural connectivity
-- ✅ Crop-cycle aligned EMI plans
-- ✅ Full Docker + Kubernetes deployment
-- ✅ CI/CD with GitHub Actions
-
-## 🚀 Quick Start
-
-### Local Development (Docker Compose)
-
-```bash
-# Clone repository
-git clone https://github.com/youruser/farmer-credit-score-engine.git
-cd farmer-credit-score-engine
-
-# Copy environment file
-cp .env.example .env
-
-# Start all services
-docker-compose up -d
-
-# Check status
-docker-compose ps
-```
-
-**Access Points:**
-- Frontend: http://localhost:3000
-- API Docs: http://localhost:8000/docs
-- Dashboard: http://localhost:3001
-- Mock Agri Stack: http://localhost:5001
-
-### Production Deployment (Kubernetes)
-
-```bash
-# Apply manifests
-kubectl apply -f k8s/
-
-# Check deployment
-kubectl get pods -n fcs-engine
-kubectl get services -n fcs-engine
-
-# Access via Ingress
-# Configure DNS: fcs.example.com -> Ingress IP
-```
-
-## 📁 Project Structure
-
-```
-farmer-credit-score-engine/
-├── services/
-│   ├── api/              # FastAPI REST API
-│   ├── worker/           # Celery background workers
-│   ├── ml/               # ML scoring module (RandomForest + SHAP)
-│   ├── frontend/         # React PWA for field agents
-│   ├── dashboard/        # React admin dashboard for banks
-│   └── mock-agri-stack/  # Simulated Agri Stack API
-├── sample_data/          # Synthetic farmer data (200 records)
-├── scripts/              # Deployment and data generation scripts
-├── k8s/                  # Kubernetes manifests
-├── .github/workflows/    # CI/CD pipelines
-├── docker-compose.yml    # Local development setup
-└── README.md
-```
-
-## 🏗️ Architecture
-
-```
-┌─────────────┐      ┌──────────────┐      ┌─────────────┐
-│   Frontend  │─────▶│   API (8000) │─────▶│  PostgreSQL │
-│  (React PWA)│      │   (FastAPI)  │      │             │
-└─────────────┘      └──────────────┘      └─────────────┘
-                            │
-                            ├─────▶ Redis (Job Queue)
-                            │
-                            ├─────▶ Worker (Celery)
-                            │
-                            └─────▶ Mock Agri Stack
-```
-
-## 📊 Scoring Model
-
-### Features (11 total)
-
-| Feature | Weight | Description |
-|---------|--------|-------------|
-| `ndvi_mean` | 15% | Crop health from satellite |
-| `past_kcc_defaults` | 15% | Credit history |
-| `last_year_yield_est` | 12% | Previous yield |
-| `ndvi_trend` | 10% | Crop vigor trend |
-| `upi_txn_freq` | 10% | Digital transaction activity |
-| `land_area` | 8% | Farm size |
-| `rainfall_anomaly_3mo` | 8% | Rainfall pattern |
-| `crop_type` | 6% | Crop category |
-| `market_price_volatility` | 6% | Price stability |
-| `fpo_membership_flag` | 5% | FPO membership |
-| `distance_to_mandi_km` | 5% | Market access |
-
-### Scoring Logic
-
-1. **Deterministic Fallback**: Weighted sum of normalized features (always available)
-2. **RandomForest Model**: Trained on synthetic data with SHAP explainability
-3. **Output**: Score (0-100) + Top 3 drivers with human-readable explanations
-
-**Example Output:**
-```json
-{
-  "score": 74,
-  "score_band": "high",
-  "drivers": [
-    {
-      "feature": "Crop health (satellite)",
-      "impact": -12,
-      "explanation": "Lower crop vigor detected from satellite"
-    },
-    {
-      "feature": "Rainfall pattern",
-      "impact": -8,
-      "explanation": "Delayed rainfall observed"
-    },
-    {
-      "feature": "Credit history",
-      "impact": -6,
-      "explanation": "1 default in KCC history"
-    }
-  ]
-}
-```
-
-## 🔌 API Endpoints
-
-### Authentication
-- `POST /auth/register` - Register agent/bank user
-- `POST /auth/login` - Login and get JWT token
-
-### Farmers
-- `POST /farmers` - Onboard new farmer
-- `GET /farmers/{id}` - Get farmer profile + latest score
-- `GET /farmers` - List all farmers
-
-### Scoring
-- `POST /score` - Compute score (synchronous)
-- `GET /score/{farmer_id}/history` - Score history
-- `POST /score/batch` - Batch scoring (async)
-
-### Loan
-- `POST /loan/quote` - Get loan eligibility + EMI plans
-
-### System
-- `GET /healthz` - Health check
-- `GET /readyz` - Readiness check
-- `GET /metrics` - Prometheus metrics
-- `GET /jobs/{job_id}` - Job status
-
-**Full API documentation**: http://localhost:8000/docs
-
-## 🧪 Testing
-
-```bash
-# Unit tests
-cd services/api
-pytest --cov=. --cov-report=html
-
-# Integration tests
-docker-compose up -d postgres redis mock-agri-stack
-pytest tests/test_integration.py
-
-# E2E tests
-npm run test:e2e
-
-# Load test
-python scripts/load_test.py --concurrent=100
-```
-
-## 📦 Deployment
-
-### Docker Compose (Single Server)
-
-```bash
-# Production build
-docker-compose -f docker-compose.yml up -d
-
-# Scale API
-docker-compose up -d --scale api=3
-
-# View logs
-docker-compose logs -f api
-```
-
-### Kubernetes (Cloud)
-
-```bash
-# Create namespace
-kubectl apply -f k8s/namespace.yaml
-
-# Deploy secrets (edit first!)
-kubectl apply -f k8s/configmap.yaml
-
-# Deploy all services
-kubectl apply -f k8s/
-
-# Monitor deployment
-kubectl get pods -n fcs-engine -w
-
-# Access logs
-kubectl logs -f deployment/api -n fcs-engine
-```
-
-**Cloud Providers:**
-- **AWS EKS**: See `infra/README.md#aws`
-- **Azure AKS**: See `infra/README.md#azure`
-- **Google GKE**: See `infra/README.md#gke`
-
-## 🔧 Configuration
-
-### Environment Variables
-
-```bash
-# API
-API_HOST=0.0.0.0
-API_PORT=8000
-JWT_SECRET=your-secret-key-change-in-production
-
-# Database
-DB_HOST=postgres
-DB_PORT=5432
-DB_USER=postgres
-DB_PASS=postgres
-DB_NAME=fcs
-
-# Redis
-REDIS_URL=redis://redis:6379/0
-
-# ML Model
-MODEL_PATH=../ml/model.joblib
-USE_ML_MODEL=true
-```
-
-See `.env.example` for full list.
-
-## 📈 Observability
-
-### Metrics (Prometheus)
-
-```bash
-# Scrape endpoint
-curl http://localhost:8000/metrics
-
-# Key metrics:
-# - api_requests_total
-# - api_request_duration_seconds
-# - score_computations_total
-```
-
-### Logs (JSON structured)
-
-```bash
-# View API logs
-docker-compose logs -f api
-
-# Example log:
-{"time": "2024-11-25T12:00:00", "level": "INFO", "message": "Score computed for FRM000001"}
-```
-
-### Health Checks
-
-```bash
-# Liveness
-curl http://localhost:8000/healthz
-
-# Readiness
-curl http://localhost:8000/readyz
-```
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit changes (`git commit -m 'Add amazing feature'`)
-4. Push to branch (`git push origin feature/amazing-feature`)
-5. Open Pull Request
-
-## 📄 License
-
-This project is licensed under the MIT License - see [LICENSE](LICENSE) file.
-
-## 📞 Support
-
-- **Documentation**: See `docs/` directory
-- **Issues**: GitHub Issues
-- **Email**: support@example.com
-
-## 🙏 Acknowledgments
-
-- Synthetic data generated using realistic agricultural patterns
-- SHAP library for model explainability
-- FastAPI framework for high-performance APIs
+[![Python](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/)
+[![React](https://img.shields.io/badge/react-18+-61DAFB.svg)](https://reactjs.org/)
 
 ---
 
-**Built with ❤️ for transparent rural lending**
+## 📖 Table of Contents
+- [The Problem](#-the-problem)
+- [The Solution](#-the-solution)
+- [How It Works](#-how-it-works)
+- [Key Features](#-key-features)
+- [Technology Stack](#-technology-stack)
+- [Architecture](#-architecture)
+- [Getting Started](#-getting-started)
+- [API Documentation](#-api-documentation)
+- [ML Model & Scoring](#-ml-model--scoring)
+- [Roadmap](#-roadmap)
+
+---
+
+## 🚩 The Problem
+
+India's **146 million farmers** face a persistent credit gap of over **₹8 trillion**. Traditional credit scoring models fail rural borrowers because:
+
+*   **No Credit History:** 70% of farmers are unbanked or lack formal credit records.
+*   **Seasonal Income:** Cash flow is tied to unpredictable crop cycles, not monthly salaries.
+*   **Collateral Dependency:** Banks rely heavily on land ownership, excluding tenant farmers.
+*   **Opaque Processes:** Farmers rarely understand why a loan was rejected.
+
+As a result, millions are forced to rely on informal money lenders charging **24-36% interest rates**.
+
+---
+
+## 💡 The Solution
+
+The **Farmer Credit Score Engine** is a fintech platform designed to bridge this gap. It computes **fair, transparent, and data-driven credit scores (0-100)** by looking beyond bank statements.
+
+We utilize **Alternative Data** to assess creditworthiness:
+1.  **Agri Stack Data:** Land records, crop registry, and government database integration.
+2.  **Satellite Imagery:** Real-time crop health monitoring using NDVI (Normalized Difference Vegetation Index).
+3.  **Weather Patterns:** Historical rainfall data and anomaly detection to assess yield risk.
+4.  **Digital Footprint:** UPI transactions, FPO memberships, and market access data.
+
+---
+
+## ⚙️ How It Works
+
+1.  **Onboarding:** A Field Agent onboards a farmer using the **Offline-First Mobile App**, capturing basic details and land coordinates.
+2.  **Data Ingestion:** The system automatically fetches satellite data, weather history, and land records for the farmer's location.
+3.  **Scoring:**
+    *   **Deterministic Model:** Calculates a baseline score using weighted rules.
+    *   **ML Model (RandomForest):** Refines the score and identifies risk factors.
+    *   **Explainability (SHAP):** Generates the "Top 3 Drivers" explaining *why* the score is what it is (e.g., "High crop health," "Consistent rainfall").
+4.  **Decision:** The Bank Admin Dashboard displays the score, risk profile, and a **customized loan offer** with EMI plans aligned to the crop harvest cycle.
+
+---
+
+## ✨ Key Features
+
+*   **✅ Explainable AI:** Unlike "black box" scores, we tell you *why*. Every score comes with human-readable reasons (e.g., "+ Good market access", "- High rainfall deficit").
+*   **✅ Offline-First PWA:** The Field Agent app works without internet, syncing data when connectivity returns—crucial for remote villages.
+*   **✅ Crop-Cycle Aligned Loans:** EMI plans are generated based on the specific crop's harvest time, reducing default risk.
+*   **✅ Microservices Architecture:** Scalable, independent services for API, ML, and Frontend.
+*   **✅ Production Ready:** Includes Docker Compose for local dev and Kubernetes manifests for cloud deployment.
+
+---
+
+## 🛠 Technology Stack
+
+### Backend & ML
+*   **FastAPI (Python):** High-performance async REST API.
+*   **Celery & Redis:** Distributed task queue for background scoring and data fetching.
+*   **Scikit-Learn:** RandomForest Regressor for credit scoring.
+*   **SHAP:** For model explainability.
+*   **PostgreSQL:** Primary relational database.
+
+### Frontend
+*   **React (Vite):** Fast, modern UI framework.
+*   **Tailwind CSS:** Utility-first styling with a custom vibrant design system.
+*   **PWA (Progressive Web App):** Service workers for offline capability.
+*   **Recharts & Leaflet:** For data visualization and maps.
+
+### Infrastructure
+*   **Docker & Docker Compose:** Containerization.
+*   **Kubernetes:** Orchestration for production.
+*   **GitHub Actions:** CI/CD pipelines.
+*   **Prometheus:** Metrics and monitoring.
+
+---
+
+## 🏗 Architecture
+
+The system follows a microservices pattern:
+
+```mermaid
+graph TD
+    Client[Field Agent App / Bank Dashboard] -->|HTTP/REST| API[API Service (FastAPI)]
+    API -->|Read/Write| DB[(PostgreSQL)]
+    API -->|Enqueue Tasks| Redis[(Redis)]
+    
+    Worker[Celery Worker] -->|Poll Tasks| Redis
+    Worker -->|Fetch Data| MockAgri[Mock Agri Stack]
+    Worker -->|Predict| ML[ML Model Service]
+    Worker -->|Save Results| DB
+    
+    ML -->|Load Model| ModelArtifact[model.joblib]
+```
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+*   Docker & Docker Compose
+*   Node.js v18+ (for local frontend dev)
+*   Python 3.9+ (for local backend dev)
+
+### Option 1: Run with Docker (Recommended)
+
+This will start the entire stack: API, Frontend, Dashboard, Database, Redis, and Worker.
+
+```bash
+# 1. Clone the repository
+git clone https://github.com/youruser/farmer-credit-score-engine.git
+cd farmer-credit-score-engine
+
+# 2. Setup environment variables
+cp .env.example .env
+
+# 3. Start services
+docker-compose up -d
+
+# 4. Access the applications
+# Frontend (Field Agent): http://localhost:3000
+# Dashboard (Bank Admin): http://localhost:3001
+# API Documentation:      http://localhost:8000/docs
+```
+
+### Option 2: Run Locally (No Docker)
+
+See [RUN_WITHOUT_DOCKER.md](RUN_WITHOUT_DOCKER.md) for detailed instructions on running services individually.
+
+---
+
+## 📡 API Documentation
+
+The API is fully documented using OpenAPI/Swagger. Once running, visit `http://localhost:8000/docs`.
+
+**Key Endpoints:**
+*   `POST /auth/login`: Authenticate users.
+*   `POST /farmers`: Onboard a new farmer.
+*   `GET /farmers/{id}/score`: Get the latest credit score.
+*   `POST /loan/quote`: Calculate loan eligibility.
+
+---
+
+## 📊 ML Model & Scoring
+
+We use a **RandomForest Regressor** trained on synthetic data that mimics real-world agricultural patterns.
+
+**Top Features Influencing Score:**
+1.  **NDVI Mean (15%):** Average crop health over the season.
+2.  **Credit History (15%):** Past defaults or successful repayments.
+3.  **Yield Estimation (12%):** Historical productivity of the land.
+4.  **Transaction Frequency (10%):** Digital financial activity.
+
+**Transparency:**
+We use **SHAP (SHapley Additive exPlanations)** to decompose the score. If a farmer gets a score of 60, the system might say:
+*   *Base Score: 50*
+*   *+15 due to excellent crop health*
+*   *-5 due to high rainfall deficit*
+
+---
+
+## 🗺 Roadmap
+
+*   **Phase 1 (Current):** Pilot with synthetic data, basic ML model, and offline PWA.
+*   **Phase 2:** Integrate real satellite data (Sentinel-2) and live weather APIs.
+*   **Phase 3:** Multi-language support for field agents and SMS alerts for farmers.
+*   **Phase 4:** Blockchain integration for immutable credit history records.
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! Please read our [CONTRIBUTING.md](CONTRIBUTING.md) (coming soon) for details on our code of conduct and the process for submitting pull requests.
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+
+**Built with ❤️ for the farmers of India.**

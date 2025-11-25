@@ -1,0 +1,255 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    :root {
+        --color-primary: 34 197 94;
+        --color-secondary: 22 163 74;
+        --color-accent: 132 204 22;
+        --color-warning: 234 179 8;
+        --color-danger: 239 68 68;
+        --color-success: 34 197 94;
+        --color-info: 59 130 246;
+    }
+
+    body {
+        @apply bg-gradient-to-br from-emerald-50 via-white to-lime-50 text-gray-900 antialiased;
+        min-height: 100vh;
+    }
+
+    * {
+        @apply transition-colors duration-200;
+    }
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.8;
+    }
+}
+
+@keyframes shimmer {
+    0% {
+        background-position: -1000px 0;
+    }
+
+    100% {
+        background-position: 1000px 0;
+    }
+}
+
+@keyframes countUp {
+    from {
+        transform: scale(0.8);
+        opacity: 0;
+    }
+
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+@layer components {
+
+    /* Enhanced Buttons */
+    .btn-primary {
+        @apply relative overflow-hidden bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white font-semibold py-3 px-8 rounded-xl transition-all duration-300 shadow-lg shadow-emerald-500/30 hover:shadow-xl hover:shadow-emerald-500/40 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100;
+    }
+
+    .btn-primary::before {
+        content: '';
+        @apply absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent;
+        transform: translateX(-100%);
+        transition: transform 0.6s;
+    }
+
+    .btn-primary:hover::before {
+        transform: translateX(100%);
+    }
+
+    .btn-secondary {
+        @apply bg-white hover:bg-gray-50 text-gray-700 font-semibold py-3 px-8 rounded-xl border-2 border-gray-200 hover:border-emerald-300 transition-all duration-300 shadow-md hover:shadow-lg hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100;
+    }
+
+    /* Enhanced Input Fields */
+    .input-field {
+        @apply w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all duration-300 disabled:bg-gray-100 disabled:cursor-not-allowed bg-white/80 backdrop-blur-sm;
+    }
+
+    .input-field:focus {
+        @apply shadow-lg shadow-emerald-500/10;
+    }
+
+    /* Glass Card */
+    .card {
+        @apply bg-white/90 backdrop-blur-md rounded-2xl shadow-xl border border-white/50 p-8 hover:shadow-2xl transition-all duration-300;
+        animation: fadeIn 0.5s ease-out;
+    }
+
+    .glass-card {
+        @apply bg-white/70 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/60 p-8 hover:bg-white/80 transition-all duration-300;
+    }
+
+    /* Gradient Backgrounds */
+    .gradient-primary {
+        @apply bg-gradient-to-br from-emerald-500 via-green-500 to-lime-500;
+    }
+
+    .gradient-secondary {
+        @apply bg-gradient-to-br from-emerald-400 to-teal-400;
+    }
+
+    .gradient-accent {
+        @apply bg-gradient-to-r from-lime-400 to-emerald-400;
+    }
+
+    /* Enhanced Score Gauge */
+    .score-gauge {
+        @apply relative w-40 h-40 rounded-full flex items-center justify-center shadow-2xl;
+        animation: countUp 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .score-low {
+        @apply bg-gradient-to-br from-red-400 to-rose-500 border-4 border-red-300 text-white shadow-lg shadow-red-500/50;
+    }
+
+    .score-medium {
+        @apply bg-gradient-to-br from-yellow-400 to-amber-500 border-4 border-yellow-300 text-white shadow-lg shadow-yellow-500/50;
+    }
+
+    .score-high {
+        @apply bg-gradient-to-br from-emerald-400 to-green-500 border-4 border-emerald-300 text-white shadow-lg shadow-emerald-500/50;
+    }
+
+    /* Stat Card */
+    .stat-card {
+        @apply bg-gradient-to-br from-white to-gray-50 rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-xl hover:scale-105 transition-all duration-300;
+    }
+
+    /* Offline Indicator */
+    .offline-indicator {
+        @apply fixed bottom-4 left-4 bg-gradient-to-r from-yellow-500 to-amber-500 text-white px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 z-50;
+        animation: pulse 2s infinite;
+    }
+
+    /* Glow Effect */
+    .glow-effect {
+        @apply shadow-lg;
+        box-shadow: 0 0 20px rgba(16, 185, 129, 0.3), 0 0 40px rgba(16, 185, 129, 0.1);
+    }
+
+    .glow-effect:hover {
+        box-shadow: 0 0 30px rgba(16, 185, 129, 0.5), 0 0 60px rgba(16, 185, 129, 0.2);
+    }
+}
+
+@layer utilities {
+
+    /* Animation Utilities */
+    .animate-fade-in {
+        animation: fadeIn 0.6s ease-out;
+    }
+
+    .animate-slide-up {
+        animation: slideUp 0.6s ease-out;
+    }
+
+    .animate-pulse-slow {
+        animation: pulse 3s infinite;
+    }
+
+    .animate-shimmer {
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+        background-size: 200% 100%;
+        animation: shimmer 2s infinite;
+    }
+
+    /* Stagger Animations */
+    .stagger-1 {
+        animation-delay: 0.1s;
+    }
+
+    .stagger-2 {
+        animation-delay: 0.2s;
+    }
+
+    .stagger-3 {
+        animation-delay: 0.3s;
+    }
+
+    .stagger-4 {
+        animation-delay: 0.4s;
+    }
+
+    /* Text Utilities */
+    .text-balance {
+        text-wrap: balance;
+    }
+
+    .text-gradient {
+        @apply bg-gradient-to-r from-emerald-600 to-green-600 bg-clip-text text-transparent;
+    }
+
+    /* Custom Scrollbar */
+    .custom-scrollbar::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-track {
+        @apply bg-gray-100 rounded-full;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+        @apply bg-gradient-to-b from-emerald-400 to-green-500 rounded-full;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+        @apply from-emerald-500 to-green-600;
+    }
+}
+
+/* Accessibility - Respect reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}

@@ -3,7 +3,7 @@ Deterministic scoring function for Farmer Credit Score Engine
 Provides transparent, rule-based scoring as fallback to ML model
 """
 from typing import Dict, List, Tuple
-from .features import extract_features, FEATURE_WEIGHTS, get_feature_descriptions
+from features import extract_features, FEATURE_WEIGHTS, get_feature_descriptions
 
 def compute_deterministic_score(farmer_data: Dict) -> Tuple[float, List[Dict]]:
     """
